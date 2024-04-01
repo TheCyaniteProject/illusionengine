@@ -1,3 +1,5 @@
+//AI generated
+
 // Create a new widget element
 document.write('<div id="clockWidget"></div>');
 var container = document.getElementById('clockWidget');
@@ -21,7 +23,7 @@ function updateClock() {
     const timeString = `${hours}:${minutes}:${seconds} ${period}`;
 
     // Update the HTML with the current time
-    container.innerHTML = `
+    container!.innerHTML = `
     <span style="font-size: 72px; text-shadow: 2px 2px #000; color:white;">${timeString}</span>
   `;
 }

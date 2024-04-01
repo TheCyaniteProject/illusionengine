@@ -1,11 +1,8 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } = require('electron');
-const path = require('path');
-const fs = require('fs');
-var exec = require('child_process').execFile;
-
-const MAIN_HTML = path.join('file://', __dirname, 'main.html');
-
-let mainWindow
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } from 'electron';
+import path from 'path';
+import fs from 'fs/promises';
+import { existsSync } from 'fs';
+import { execFile } from 'child_process';
 
 const createWindow = function () {
     const window = new BrowserWindow({
@@ -21,7 +18,12 @@ const createWindow = function () {
         }
     });
 
-    window.loadURL(MAIN_HTML);
+    if (process.env.DEV == 'true') {
+        window.loadURL('http://127.0.0.1:3000');
+    }
+    else {
+        window.loadFile(path.join(__dirname, 'index.html'));
+    }
 
     return window;
 };
@@ -29,36 +31,35 @@ const createWindow = function () {
 app.disableHardwareAcceleration();
 
 app.on('ready', () => {
-    mainWindow = createWindow();
+    createWindow();
 });
-
-let tray;
 
 app.whenReady().then(() => {
     const icon = nativeImage.createFromPath('C:/Users/thecy/Pictures/test.png');
-    tray = new Tray(icon);
-
+    const tray = new Tray(icon);
     const contextMenu = Menu.buildFromTemplate([
         {
             label: 'Show Widgets', click: function () {
-                mainWindow.setFocusable(true);
-                mainWindow.show();
-                mainWindow.setFocusable(false);
+                const window = BrowserWindow.getAllWindows()[0];
+                window.setFocusable(true);
+                window.show();
+                // window.setFocusable(false);
             }
         },
         {
             label: 'Reload Widgets', click: function () {
-                mainWindow.reload();
+                const window = BrowserWindow.getAllWindows()[0];
+                window.reload();
             }
         },
         {
             label: 'DevTools', click: function () {
-                mainWindow.webContents.openDevTools()
+                const window = BrowserWindow.getAllWindows()[0];
+                window.webContents.openDevTools();
             }
         },
         {
             label: 'Exit', click: function () {
-                app.isQuiting = true;
                 app.quit();
             }
         }
@@ -66,13 +67,13 @@ app.whenReady().then(() => {
 
     tray.setToolTip('IllusionEngine');
     tray.setContextMenu(contextMenu);
-
 });
 
-var widget_dir = "/widgets/";
-var appdata = "appdata.json";
+const widget_dir = "/widgets/";
+const appdata = "appdata.json";
 
-function runexternalcommand(processid) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function runexternalcommand(processid: string) {
     // check if processid has been asigned. If not, prompt the user to add a new process or select from list
     // Else, run the saved process.
 
@@ -81,8 +82,8 @@ function runexternalcommand(processid) {
     try {
         const datapath = path.join(__dirname, appdata);
 
-        let rawdata = fs.readFileSync(datapath);
-        let data = JSON.parse(rawdata);
+        const rawdata = await fs.readFile(datapath, 'utf8');
+        const data = JSON.parse(rawdata);
 
         // check for process
         if ("widgets" in data) {
@@ -101,35 +102,36 @@ function runexternalcommand(processid) {
     }
 }
 
-function createPrompt(processid) {
+function createPrompt(processid: string) {
     // call main.js to make prompt window
 
     // debug
     promptCallback(processid, "chipi.gif");
 }
 
-function promptCallback(processid, value) {
+async function promptCallback(processid: string, value: string) {
     // creates 'appdata' file if it doesn't exist, also 'widgets' and 'processid' data vars, and then sets it's value
     try {
-        var datapath = path.join(__dirname, appdata);
-        if (fs.existsSync(datapath)) {
-            let rawdata = fs.readFileSync(datapath);
-            let data = JSON.parse(rawdata);
+        const datapath = path.join(__dirname, appdata);
+        if (existsSync(datapath)) {
+            const rawdata = await fs.readFile(datapath, 'utf8');
+            const data = JSON.parse(rawdata);
 
             data["widgets"][processid] = value;
 
-            let jsondata = JSON.stringify(data);
-            fs.writeFileSync(datapath, jsondata);
+            const jsondata = JSON.stringify(data);
+            await fs.writeFile(datapath, jsondata);
 
             run(value);
         }
         else {
-            let data = {};
+            const data = {};
 
+            //@ts-expect-error untyped variable
             data["widgets"][processid] = value;
 
-            let jsondata = JSON.stringify(data);
-            fs.writeFileSync(datapath, jsondata);
+            const jsondata = JSON.stringify(data);
+            await fs.writeFile(datapath, jsondata);
 
             run(value);
         }
@@ -146,8 +148,8 @@ ipcMain.on('call-process', (event, arg) => {
     run(arg); // replace with runexternalcommand
 });
 
-function run(process) {
-    exec('Notepad.exe');
+function run(process = 'Notepad.exe') {
+    execFile(process);
 }
 
 ipcMain.on('write-json', (event, arg) => {
@@ -158,11 +160,11 @@ ipcMain.on('write-json', (event, arg) => {
     writeJSON(arg[0], arg[1]);
 });
 
-function writeJSON(id, data) {
+async function writeJSON(id: string, data: unknown) {
     // write json to file, probably safe
 
-    let jsondata = JSON.stringify(data);
-    fs.writeFileSync(path.join(__dirname, widget_dir, id, 'savedata.json'), jsondata);
+    const jsondata = JSON.stringify(data);
+    await fs.writeFile(path.join(__dirname, widget_dir, id, 'savedata.json'), jsondata);
 }
 
 ipcMain.on('fetch-json', (event, arg) => {
@@ -174,13 +176,13 @@ ipcMain.on('fetch-json', (event, arg) => {
     event.reply('fetch-reply', [arg, value]);
 });
 
-function fetchJSON(id) {
+async function fetchJSON(id: string) {
     // get json from file
     try {
-        let rawdata = fs.readFileSync(path.join(__dirname, widget_dir, id, 'savedata.json'));
-        let data = JSON.parse(rawdata);
+        const rawdata = await fs.readFile(path.join(__dirname, widget_dir, id, 'savedata.json'), 'utf8');
+        const data = JSON.parse(rawdata);
         return data;
     } catch (err) {
-        return { };
+        return {};
     }
 }

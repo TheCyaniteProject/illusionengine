@@ -1,3 +1,5 @@
+import path from './duckswidget.css';
+
 const pics = [
     "https://muon.blog/mycology/coverimages/Agaric",
     "https://muon.blog/mycology/coverimages/Amanita",
@@ -24,7 +26,7 @@ const pics = [
     "https://muon.blog/mycology/coverimages/Tricholoma",
     "https://muon.blog/mycology/coverimages/Waxcaps",
     "https://muon.blog/mycology/coverimages/Xylaria",
-]
+];
 
 document.write(`
 <div id="duckswidget">
@@ -33,21 +35,21 @@ document.write(`
         <img id="picthing" onclick="changePic()"></img>
     </div>
 </div>
-<link rel="stylesheet" href="duckswidget.css"> 
+<link rel="stylesheet" href="${path}"> 
 `);
 
 
-const widget = document.getElementById('duckswidget');
+const widget = document.getElementById('duckswidget')!;
 
 changePic();
 function changePic() {
-    document.getElementById("picthing").src = pics[Math.floor(Math.random() * pics.length)] + ".jpg";
+    (document.getElementById("picthing") as HTMLImageElement).src = pics[Math.floor(Math.random() * pics.length)] + ".jpg";
     widget.classList.remove('dragging');  // Ensure the class is removed initially
 }
 
 // drag logic
 let isDragging = false;
-let offsetX, offsetY;
+let offsetX: number, offsetY: number;
 
 widget.addEventListener('mousedown', (e) => {
     isDragging = true;

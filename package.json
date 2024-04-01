@@ -1,21 +1,45 @@
 {
-  "name": "electron",
+  "name": "illusionengine",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "build/main.js",
   "scripts": {
-    "start": "electron .",
-    "startWithTransparentOption": "electron --enable-transparent-visuals .",
-    "startWithAllOptions": "electron --enable-transparent-visuals --disable-gpu ."
+    "watch": "node build.mjs --watch",
+    "start:dev": "cross-env DEV=true concurrently -k \"npm:serve\" \"wait-on http://127.0.0.1:3000 && npm run start:build\"",
+    "start:build": "electron ./build/main.js",
+    "serve": "live-server build --no-browser --port=3000 --host=127.0.0.1",
+    "typecheck": "tsc --no-emit",
+    "build": "node build.mjs && electron-builder"
+  },
+  "build": {
+    "productName": "IllusionEngine",
+    "files": [
+      "./build/**/*"
+    ]
   },
   "keywords": [],
   "author": "",
+  "contributors": [
+    {
+      "name": "Shy",
+      "url": "https://github.com/shyguy1412/"
+    }
+  ],
   "license": "ISC",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.4.0",
     "@typescript-eslint/parser": "^7.4.0",
+    "concurrently": "^8.2.2",
     "electron": "^29.1.6",
+    "electron-builder": "^24.13.3",
+    "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.1"
+    "eslint-plugin-react": "^7.34.1",
+    "live-server": "^1.2.2",
+    "typescript": "^5.4.3",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "normalize.css": "^8.0.1"
   }
 }

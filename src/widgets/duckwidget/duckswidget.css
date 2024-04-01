@@ -8,9 +8,9 @@
     position: absolute;
 }
 
-    #duckswidget:hover {
-        background-color: black;
-    }
+#duckswidget:hover {
+    background-color: black;
+}
 
 #ducksheader {
     color: white;

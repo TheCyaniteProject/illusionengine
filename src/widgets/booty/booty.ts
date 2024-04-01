@@ -1,3 +1,5 @@
+import chipi from '@/assets/chipi.gif';
+
 // Create the container for the box
 var container = document.createElement('div');
 container.style.position = 'relative'; // Important for containing absolute child 
@@ -7,7 +9,7 @@ document.body.appendChild(container);
 var box = document.createElement('img');
 box.id = 'box'; // Set the ID for styling
 container.appendChild(box);
-box.src = 'chipi.gif'
+box.src = chipi;
 // <img src="chipi.gif" style="width:100px;height;100px;border-radius=10px"></img>
 // Apply styles through JavaScript
 box.style.width = '100px';
@@ -36,7 +38,7 @@ function animate() {
         speedX = -speedX;
         isFlipped = !isFlipped;
     }
-    if (top + boxHeight+(boxHeight / 2) >= windowHeight || top < 0) {
+    if (top + boxHeight + (boxHeight / 2) >= windowHeight || top < 0) {
         speedY = -speedY;
         //isFlipped = !isFlipped;
     }
