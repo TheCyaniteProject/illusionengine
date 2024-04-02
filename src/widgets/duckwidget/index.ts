@@ -1,4 +1,4 @@
-import path from './duckswidget.css';
+import './index.css';
 
 const pics = [
     "https://muon.blog/mycology/coverimages/Agaric",
@@ -27,17 +27,6 @@ const pics = [
     "https://muon.blog/mycology/coverimages/Waxcaps",
     "https://muon.blog/mycology/coverimages/Xylaria",
 ];
-
-document.write(`
-<div id="duckswidget">
-    <h3 id="ducksheader">Mushroom Vibes</h3>
-    <div id="ducksmushrooms">
-        <img id="picthing" onclick="changePic()"></img>
-    </div>
-</div>
-<link rel="stylesheet" href="${path}"> 
-`);
-
 
 const widget = document.getElementById('duckswidget')!;
 

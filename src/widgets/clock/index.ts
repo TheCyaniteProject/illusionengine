@@ -1,7 +1,6 @@
 //AI generated
 
 // Create a new widget element
-document.write('<div id="clockWidget"></div>');
 var container = document.getElementById('clockWidget');
 
 // Function to update the clock display

@@ -1,5 +1,5 @@
 import { context } from 'esbuild';
-import { copyFile } from 'fs/promises';
+import fs from 'fs/promises';
 
 const WATCH = process.argv.includes('--watch');
 
@@ -19,9 +19,18 @@ const createMainContext = async () => await context({
 const copyHtmlPlugin = {
   name: "HTMLPlugin",
   setup(pluginBuild) {
-    pluginBuild.onEnd(async () => {
+    pluginBuild.onLoad({ filter: /index\.[tj]sx?/ }, async ({ path }) => {
+      const { outdir, outbase } = pluginBuild.initialOptions;
       try {
-        copyFile('src/render/index.html', `${pluginBuild.initialOptions.outdir}/index.html`);
+        const [, filepath] = path
+          .replace(process.cwd(), '.') //make path relative
+          .replaceAll(/\\+/g, '/') //convert windows path to unix
+          .split(/(.*)\/(.*)/); //split into path and filename [<empty string>, path, filename]
+
+        const destinationPath = `${outdir}${filepath.replace(outbase, '')}`;
+        await fs.mkdir(destinationPath, { recursive: true });
+        await fs.copyFile(`${filepath}/index.html`, `${destinationPath}/index.html`);
+        return { watchFiles: [`${filepath}/index.html`] };
       } catch (e) { console.log(e); };
     });
   }
@@ -32,7 +41,7 @@ const createRenderContext = async () => await context({
     "src/render/**/*.ts"
   ],
   plugins: [copyHtmlPlugin],
-  outbase: "./src",
+  outbase: "./src/render",
   outdir: "./build",
   bundle: true,
   format: 'esm',
@@ -43,15 +52,15 @@ const createRenderContext = async () => await context({
 
 const createWidgetContext = async () => await context({
   entryPoints: [
-    "src/widgets/**/*.ts"
+    "src/widgets/**/index.ts"
   ],
   plugins: [copyHtmlPlugin],
   outbase: "./src/widgets",
   outdir: "./build",
   bundle: true,
   loader: {
-    '.gif': "dataurl",
-    '.css': "dataurl"
+    '.html': 'file',
+    '.gif': 'file'
   },
   format: 'esm',
   platform: 'browser',
