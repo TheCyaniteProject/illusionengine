@@ -1,4 +1,5 @@
-import './index.css';
+import './duckwidget.css';
+import './widget.json';
 
 const pics = [
     "https://muon.blog/mycology/coverimages/Agaric",
