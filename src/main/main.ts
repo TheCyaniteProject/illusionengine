@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
@@ -35,7 +35,7 @@ app.on('ready', () => {
 });
 
 app.whenReady().then(() => {
-    const icon = nativeImage.createFromPath('C:/Users/thecy/Pictures/test.png');
+    const icon = nativeImage.createFromPath('C:/Users/thecy/Pictures/test.png'); // needs to be local
     const tray = new Tray(icon);
     const contextMenu = Menu.buildFromTemplate([
         {
@@ -80,7 +80,7 @@ async function runexternalcommand(processid: string) {
     // read saved appdata
 
     try {
-        const datapath = path.join(__dirname, appdata);
+        const datapath = path.join(app.getPath("userData"), appdata);
 
         const rawdata = await fs.readFile(datapath, 'utf8');
         const data = JSON.parse(rawdata);
@@ -88,11 +88,12 @@ async function runexternalcommand(processid: string) {
         // check for process
         if ("widgets" in data) {
             if (processid in data["widgets"]) {
+                console.log("Has data");
                 run(data["widgets"][processid]);
                 return;
             }
         }
-
+        console.log("No data");
         // no > new process prompt
         createPrompt(processid);
 
@@ -102,50 +103,46 @@ async function runexternalcommand(processid: string) {
     }
 }
 
-function createPrompt(processid: string) {
+async function createPrompt(processid: string) {
 
-    // debug
-    promptCallback(processid, "chipi.gif");
-}
+    const value = (await dialog.showOpenDialog({ properties: ['openFile'] })).filePaths[0];
 
-async function promptCallback(processid: string, value: string) {
     // creates 'appdata' file if it doesn't exist, also 'widgets' and 'processid' data vars, and then sets it's value
+    const datapath = path.join(app.getPath("userData"), appdata);
+    let data = { widgets: { [processid]: value } };
     try {
-        const datapath = path.join(__dirname, appdata);
         if (existsSync(datapath)) {
+            console.log("has path");
             const rawdata = await fs.readFile(datapath, 'utf8');
-            const data = JSON.parse(rawdata);
+            data = JSON.parse(rawdata);
 
+            data["widgets"] ??= {}
             data["widgets"][processid] = value;
-
-            const jsondata = JSON.stringify(data);
-            await fs.writeFile(datapath, jsondata);
-
-            run(value);
-        }
-        else {
-            const data = {};
-
-            //@ts-expect-error untyped variable
-            data["widgets"][processid] = value;
-
-            const jsondata = JSON.stringify(data);
-            await fs.writeFile(datapath, jsondata);
-
-            run(value);
         }
     } catch (err) {
-        // error
+        // pass
     }
+
+    const jsondata = JSON.stringify(data, null, 2);
+    await fs.writeFile(datapath, jsondata);
+
+    run(value);
 }
 
 ipcMain.on('call-process', (event, arg) => {
     console.log(arg + " process requested");
-    run(arg); // replace with runexternalcommand
+    runexternalcommand(arg);
+});
+
+// debug - remove after contextBridge is replaced
+app.on('ready', () => {
+    //runexternalcommand("testid1");
+    //writeJSON("testwidget", { foo: "bar", foo2: [ "data" ] });
 });
 
 function run(process: string) {
-    execFile(process);
+    console.log("exec: " + process);
+    execFile(path.join(process));
 }
 
 ipcMain.on('write-json', (event, arg) => {
@@ -157,8 +154,11 @@ ipcMain.on('write-json', (event, arg) => {
 async function writeJSON(id: string, data: unknown) {
     // write json to file, probably safe
 
-    const jsondata = JSON.stringify(data);
-    await fs.writeFile(path.join(__dirname, widget_dir, id, 'savedata.json'), jsondata);
+    const datapath = path.join(app.getPath("userData"), widget_dir, id);
+
+    const jsondata = JSON.stringify(data, null, 2);
+    await fs.mkdir(datapath, { recursive: true });
+    await fs.writeFile(path.join(datapath, 'savedata.json'), jsondata);
 }
 
 ipcMain.on('fetch-json', (event, arg) => {
@@ -173,7 +173,7 @@ ipcMain.on('fetch-json', (event, arg) => {
 async function fetchJSON(id: string) {
     // get json from file
     try {
-        const rawdata = await fs.readFile(path.join(__dirname, widget_dir, id, 'savedata.json'), 'utf8');
+        const rawdata = await fs.readFile(path.join(app.getPath("userData"), widget_dir, id, 'savedata.json'), 'utf8');
         const data = JSON.parse(rawdata);
         return data;
     } catch (err) {

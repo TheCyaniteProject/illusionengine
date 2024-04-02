@@ -8,20 +8,8 @@ export const API = {
         ipcRenderer.send("write-json", [id, data]);
     },
     async read(id: string) {
-        return await fetchJSON(id);
+        return await ipcRenderer.invoke('fetch-reply', id);
     },
 } as const;
 
 contextBridge.exposeInMainWorld("illusion_engine", API);
-
-const readresolvers = new Map();
-ipcRenderer.on("fetch-reply", (_event, arg) => {
-    readresolvers.get(arg[0])(arg[1]);
-    readresolvers.delete(arg[0]);
-});
-function fetchJSON(id: string) {
-    return new Promise((res) => {
-        ipcRenderer.send("fetch-json", id);
-        readresolvers.set(id, res);
-    });
-}
