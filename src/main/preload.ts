@@ -2,28 +2,17 @@ import { contextBridge, ipcRenderer } from "electron";
 
 export const API = {
     run(processid: string) {
-        runexternalcommand(processid);
+        ipcRenderer.send("call-process", processid);
     },
     write(id: string, data: unknown) {
-        writeJSON(id, data);
+        ipcRenderer.send("write-json", [id, data]);
     },
     async read(id: string) {
         return await fetchJSON(id);
     },
-    newFunkyMethod(obj: { name: string, thingy: number; }) {
-        return obj;
-    }
 } as const;
 
 contextBridge.exposeInMainWorld("illusion_engine", API);
-
-function runexternalcommand(processid: string) {
-    ipcRenderer.send("call-process", processid);
-}
-
-function writeJSON(id: string, data: unknown) {
-    ipcRenderer.send("write-json", [id, data]);
-}
 
 const readresolvers = new Map();
 ipcRenderer.on("fetch-reply", (_event, arg) => {

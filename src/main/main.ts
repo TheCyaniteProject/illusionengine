@@ -103,7 +103,6 @@ async function runexternalcommand(processid: string) {
 }
 
 function createPrompt(processid: string) {
-    // call main.js to make prompt window
 
     // debug
     promptCallback(processid, "chipi.gif");
@@ -142,21 +141,16 @@ async function promptCallback(processid: string, value: string) {
 
 ipcMain.on('call-process', (event, arg) => {
     console.log(arg + " process requested");
-
-    // works like `send`, but returning a message back
-    // to the renderer that sent the original message
     run(arg); // replace with runexternalcommand
 });
 
-function run(process = 'Notepad.exe') {
+function run(process: string) {
     execFile(process);
 }
 
 ipcMain.on('write-json', (event, arg) => {
     console.log(arg + " requested to save .json");
-
-    // works like `send`, but returning a message back
-    // to the renderer that sent the original message
+    // [ eventid, jsondata]
     writeJSON(arg[0], arg[1]);
 });
 
