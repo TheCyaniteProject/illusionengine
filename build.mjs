@@ -4,7 +4,7 @@ import { existsSync } from 'fs';
 
 const WATCH = process.argv.includes('--watch');
 
-const createMainContext = async () => await context({
+const createMainContext = () => context({
   entryPoints: [
     "src/main/main.ts",
     "src/main/preload.ts",
@@ -40,39 +40,39 @@ const copyHtmlPlugin = {
 };
 
 /** @type import("esbuild").Plugin */
-const WidgetPlugin = {
+const copyWidgetPlugin = {
   name: "HTMLPlugin",
   setup(pluginBuild) {
 
-    pluginBuild.onLoad({ filter: /widget.json/ }, async ({ path }) => {
-      const { outdir, outbase } = pluginBuild.initialOptions;
-      try {
-        const { entrypoint } = JSON.parse(await fs.readFile(path, { encoding: 'utf8' }));
-        const [, filepath] = path
-          .replace(process.cwd(), '.') //make path relative
-          .replaceAll(/\\+/g, '/') //convert windows path to unix
-          .split(/(.*)\/(.*)/); //split into path and filename [<empty string>, path, filename]
+    pluginBuild.onEnd(async () => {
+      const {
+        entryPoints: [widgetGlob],
+        outdir,
+        outbase
+      } = pluginBuild.initialOptions;
 
-        const script = entrypoint.replace(/\.html$/, '.js')
+      const [, path] = widgetGlob.split(/(.*)\/.*/);
+      const widgetJson = `${path}/widget.json`;
+      const destinationPath = `${outdir}${path.replace(outbase, '')}`;
 
-        const destinationPath = `${outdir}${filepath.replace(outbase, '')}`;
-        await fs.mkdir(destinationPath, { recursive: true });
-        await fs.copyFile(`${filepath}/${entrypoint}`, `${destinationPath}/${entrypoint}`);
-        return { watchFiles: [`${filepath}/${entrypoint}`] };
-      } catch (e) { console.log(e); };
+      if (!existsSync(widgetJson)) return;
+      await fs.mkdir(destinationPath, { recursive: true, });
+      await fs.copyFile(widgetJson, `${destinationPath}/widget.json`);
     });
-
-    pluginBuild.onEnd(async ({ path }) => { });
   }
 };
 
-const createRenderContext = async () => await context({
+const createRenderContext = () => context({
   entryPoints: [
     "src/render/**/*.ts"
   ],
   plugins: [copyHtmlPlugin],
   outbase: "./src/render",
   outdir: "./build",
+  loader: {
+    '.html': 'text',
+    '.raw.css': 'text'
+  },
   bundle: true,
   format: 'esm',
   platform: 'browser',
@@ -80,11 +80,16 @@ const createRenderContext = async () => await context({
   logLevel: 'info'
 });
 
-const createWidgetContext = async () => await context({
+const widgets = await fs.readdir('./src/widgets')
+  .then(dirs => dirs.map(dir => `./src/widgets/${dir}/*.ts`));
+
+console.log(widgets);
+
+const createWidgetContexts = () => widgets.map(widget => context({
   entryPoints: [
-    "src/widgets/**/*.ts"
+    widget
   ],
-  plugins: [copyHtmlPlugin, WidgetPlugin],
+  plugins: [copyHtmlPlugin, copyWidgetPlugin],
   outbase: "./src/widgets",
   outdir: "./build",
   bundle: true,
@@ -96,13 +101,13 @@ const createWidgetContext = async () => await context({
   platform: 'browser',
   // minify: !WATCH,
   logLevel: 'info'
-});
+}));
 
 
 const contexts = await Promise.all([
   createMainContext(),
   createRenderContext(),
-  createWidgetContext()
+  ...createWidgetContexts()
 ]);
 
 if (WATCH) {
@@ -111,7 +116,7 @@ if (WATCH) {
 
 } else {
 
-  await Promise.all(contexts.map(ctx => ctx.rebuild()));
+  for (const ctx of contexts) await ctx.rebuild();
   for (const ctx of contexts) ctx.dispose();
 
 };
