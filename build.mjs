@@ -1,6 +1,7 @@
 import { context } from 'esbuild';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import { createWidgetContexts } from './src/widgets/context.mjs';
 
 const WATCH = process.argv.includes('--watch');
 
@@ -39,29 +40,6 @@ const copyHtmlPlugin = {
   }
 };
 
-/** @type import("esbuild").Plugin */
-const copyWidgetPlugin = {
-  name: "HTMLPlugin",
-  setup(pluginBuild) {
-
-    pluginBuild.onEnd(async () => {
-      const {
-        entryPoints: [widgetGlob],
-        outdir,
-        outbase
-      } = pluginBuild.initialOptions;
-
-      const [, path] = widgetGlob.split(/(.*)\/.*/);
-      const widgetJson = `${path}/widget.json`;
-      const destinationPath = `${outdir}${path.replace(outbase, '')}`;
-
-      if (!existsSync(widgetJson)) return;
-      await fs.mkdir(destinationPath, { recursive: true, });
-      await fs.copyFile(widgetJson, `${destinationPath}/widget.json`);
-    });
-  }
-};
-
 const createRenderContext = () => context({
   entryPoints: [
     "src/render/**/*.ts"
@@ -80,39 +58,15 @@ const createRenderContext = () => context({
   logLevel: 'info'
 });
 
-const widgets = await fs.readdir('./src/widgets')
-  .then(dirs => dirs.map(dir => `./src/widgets/${dir}/*.ts`));
-
-console.log(widgets);
-
-const createWidgetContexts = () => widgets.map(widget => context({
-  entryPoints: [
-    widget
-  ],
-  plugins: [copyHtmlPlugin, copyWidgetPlugin],
-  outbase: "./src/widgets",
-  outdir: "./build",
-  bundle: true,
-  loader: {
-    '.gif': 'file',
-    '.json': 'file'
-  },
-  format: 'esm',
-  platform: 'browser',
-  // minify: !WATCH,
-  logLevel: 'info'
-}));
-
-
 const contexts = await Promise.all([
   createMainContext(),
   createRenderContext(),
-  ...createWidgetContexts()
+  ...createWidgetContexts('src/widgets')
 ]);
 
 if (WATCH) {
 
-  for (const ctx of contexts) ctx.watch();
+  for (const ctx of contexts) await ctx.watch();
 
 } else {
 
