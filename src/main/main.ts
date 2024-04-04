@@ -1,8 +1,11 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
-import { existsSync } from 'fs';
 import { execFile } from 'child_process';
+
+const widget_dir = "/widgets/";
+const widgetdata_dir = "/widgetdata/";
+const appdata = "appdata.json";
 
 const createWindow = function () {
     const window = new BrowserWindow({
@@ -14,7 +17,7 @@ const createWindow = function () {
         focusable: true,
         frame: false,
         webPreferences: {
-            preload: path.join(__dirname, './preload.js'),
+            preload: path.join(__dirname, 'preload.js'),
         }
     });
 
@@ -35,7 +38,7 @@ app.on('ready', () => {
 });
 
 app.whenReady().then(() => {
-    const icon = nativeImage.createFromPath('C:/Users/thecy/Pictures/test.png');
+    const icon = nativeImage.createFromPath('./app.ico');
     const tray = new Tray(icon);
     const contextMenu = Menu.buildFromTemplate([
         {
@@ -69,9 +72,6 @@ app.whenReady().then(() => {
     tray.setContextMenu(contextMenu);
 });
 
-const widget_dir = "/widgets/";
-const appdata = "appdata.json";
-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function runexternalcommand(processid: string) {
     // check if processid has been asigned. If not, prompt the user to add a new process or select from list
@@ -80,7 +80,7 @@ async function runexternalcommand(processid: string) {
     // read saved appdata
 
     try {
-        const datapath = path.join(__dirname, appdata);
+        const datapath = path.join(app.getPath("userData"), appdata);
 
         const rawdata = await fs.readFile(datapath, 'utf8');
         const data = JSON.parse(rawdata);
@@ -88,11 +88,12 @@ async function runexternalcommand(processid: string) {
         // check for process
         if ("widgets" in data) {
             if (processid in data["widgets"]) {
+                console.log("Has data");
                 run(data["widgets"][processid]);
                 return;
             }
         }
-
+        console.log("No data");
         // no > new process prompt
         createPrompt(processid);
 
@@ -102,50 +103,44 @@ async function runexternalcommand(processid: string) {
     }
 }
 
-function createPrompt(processid: string) {
+async function createPrompt(processid: string) {
 
-    // debug
-    promptCallback(processid, "chipi.gif");
-}
+    const value = (await dialog.showOpenDialog({ properties: ['openFile'] })).filePaths[0];
 
-async function promptCallback(processid: string, value: string) {
     // creates 'appdata' file if it doesn't exist, also 'widgets' and 'processid' data vars, and then sets it's value
+    const datapath = path.join(app.getPath("userData"), appdata);
+    let data = { widgets: { [processid]: value } };
     try {
-        const datapath = path.join(__dirname, appdata);
-        if (existsSync(datapath)) {
-            const rawdata = await fs.readFile(datapath, 'utf8');
-            const data = JSON.parse(rawdata);
+        const rawdata = await fs.readFile(datapath, 'utf8');
+        data = JSON.parse(rawdata);
 
-            data["widgets"][processid] = value;
-
-            const jsondata = JSON.stringify(data);
-            await fs.writeFile(datapath, jsondata);
-
-            run(value);
-        }
-        else {
-            const data = {};
-
-            //@ts-expect-error untyped variable
-            data["widgets"][processid] = value;
-
-            const jsondata = JSON.stringify(data);
-            await fs.writeFile(datapath, jsondata);
-
-            run(value);
-        }
+        data["widgets"] ??= {}
+        data["widgets"][processid] = value;
     } catch (err) {
-        // error
+        // pass
     }
+
+    const jsondata = JSON.stringify(data, null, 2);
+    await fs.writeFile(datapath, jsondata);
+
+    run(value);
 }
 
 ipcMain.on('call-process', (event, arg) => {
     console.log(arg + " process requested");
-    run(arg); // replace with runexternalcommand
+    runexternalcommand(arg);
+});
+
+// debug - remove after contextBridge is replaced
+app.on('ready', () => {
+    //runexternalcommand("testid1");
+    //writeJSON("testwidget", { foo: "bar", foo2: [ "data" ] });
+    console.log(getWidgetLoadData());
 });
 
 function run(process: string) {
-    execFile(process);
+    console.log("exec: " + process);
+    execFile(path.join(process));
 }
 
 ipcMain.on('write-json', (event, arg) => {
@@ -157,8 +152,11 @@ ipcMain.on('write-json', (event, arg) => {
 async function writeJSON(id: string, data: unknown) {
     // write json to file, probably safe
 
-    const jsondata = JSON.stringify(data);
-    await fs.writeFile(path.join(__dirname, widget_dir, id, 'savedata.json'), jsondata);
+    const datapath = path.join(app.getPath("userData"), widgetdata_dir, id);
+
+    const jsondata = JSON.stringify(data, null, 2);
+    await fs.mkdir(datapath, { recursive: true });
+    await fs.writeFile(path.join(datapath, 'savedata.json'), jsondata);
 }
 
 ipcMain.on('fetch-json', (event, arg) => {
@@ -173,10 +171,36 @@ ipcMain.on('fetch-json', (event, arg) => {
 async function fetchJSON(id: string) {
     // get json from file
     try {
-        const rawdata = await fs.readFile(path.join(__dirname, widget_dir, id, 'savedata.json'), 'utf8');
+        const rawdata = await fs.readFile(path.join(app.getPath("userData"), widgetdata_dir, id, 'savedata.json'), 'utf8');
         const data = JSON.parse(rawdata);
         return data;
     } catch (err) {
         return {};
     }
+}
+
+const getDirectories = async (source: string) =>
+    (await fs.readdir(source, { withFileTypes: true }))
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
+
+async function getWidgetLoadData() {
+    const datalist = [];
+
+    const dirs = await getDirectories(path.join(app.getPath("userData"), widget_dir))
+    for (let i = 0; i < dirs.length; i++) {
+        try {
+            const datapath = path.join(app.getPath("userData"), widget_dir, dirs[i], 'widget.json');
+            const rawdata = await fs.readFile(datapath, 'utf8');
+
+            datalist.push({
+                key: dirs[i],
+                value: JSON.parse(rawdata)
+            });
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    return datalist;
 }
