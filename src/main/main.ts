@@ -1,7 +1,6 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
-import { existsSync } from 'fs';
 import { execFile } from 'child_process';
 
 const widget_dir = "/widgets/";
@@ -136,7 +135,7 @@ ipcMain.on('call-process', (event, arg) => {
 app.on('ready', () => {
     //runexternalcommand("testid1");
     //writeJSON("testwidget", { foo: "bar", foo2: [ "data" ] });
-    getWidgetLoadData();
+    console.log(getWidgetLoadData());
 });
 
 function run(process: string) {
@@ -180,7 +179,7 @@ async function fetchJSON(id: string) {
     }
 }
 
-const getDirectories = async source =>
+const getDirectories = async (source: string) =>
     (await fs.readdir(source, { withFileTypes: true }))
         .filter(dirent => dirent.isDirectory())
         .map(dirent => dirent.name)
