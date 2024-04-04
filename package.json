@@ -15,7 +15,8 @@
     "productName": "IllusionEngine",
     "files": [
       "./build/**/*"
-    ]
+    ],
+    "icon": "./app.ico"
   },
   "keywords": [],
   "author": "Kieee",
