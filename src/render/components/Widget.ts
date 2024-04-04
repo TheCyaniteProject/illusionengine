@@ -1,5 +1,6 @@
 import ShadowDom from './WidgetShadowDom.html';
 import StyleSheet from './WidgetStyle.raw.css';
+import * as API from '@/render/Api';
 
 export type WidgetAttributes = typeof Widget.observedAttributes[number];
 export type AttributeChangeHandler = `on${Capitalize<WidgetAttributes>}Change`;
@@ -15,6 +16,7 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
   static #registered = false;
   #shadow: ShadowRoot;
   #iframe: HTMLIFrameElement;
+  onMessage: (event: MessageEvent) => void;
 
   //runs when element is created with createCompent()
   constructor() {
@@ -29,6 +31,34 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
     this.#shadow.adoptedStyleSheets = [css];
 
     this.#iframe = this.#shadow.querySelector('iframe')!;
+    this.onMessage = this.#onMessage.bind(this);
+  }
+
+  #onMessage(event: MessageEvent) {
+    const { source } = event;
+    if (source != this.#iframe.contentWindow) return;
+
+    const { data: { method, args } } = event;
+
+    if (typeof method != 'string')
+      throw new TypeError(`Expected method to be string, got '${typeof method}'`);
+
+    if (!(args instanceof Array))
+      throw new TypeError(`Expected args to be array, got '${typeof args}'`);
+
+    const apiMethod = API[method as keyof typeof API];
+
+    if (typeof apiMethod != 'function') throw new Error(`Unknown method: ${method}`);
+
+    apiMethod(...args as Parameters<typeof apiMethod>);
+  }
+
+  connectedCallback() {
+    window.addEventListener('message', this.onMessage);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('message', this.onMessage);
   }
 
   static register() {
