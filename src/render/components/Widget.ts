@@ -50,7 +50,8 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
 
     if (typeof apiMethod != 'function') throw new Error(`Unknown method: ${method}`);
 
-    apiMethod(...args as Parameters<typeof apiMethod>);
+    //@ts-expect-error dont know how to type that tbh
+    apiMethod(...args);
   }
 
   connectedCallback() {
