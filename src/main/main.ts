@@ -4,6 +4,10 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { execFile } from 'child_process';
 
+const widget_dir = "/widgets/";
+const widgetdata_dir = "/widgetdata/";
+const appdata = "appdata.json";
+
 const createWindow = function () {
     const window = new BrowserWindow({
         fullscreen: true,
@@ -14,7 +18,7 @@ const createWindow = function () {
         focusable: true,
         frame: false,
         webPreferences: {
-            preload: path.join(__dirname, './preload.js'),
+            preload: path.join(__dirname, 'preload.js'),
         }
     });
 
@@ -35,7 +39,7 @@ app.on('ready', () => {
 });
 
 app.whenReady().then(() => {
-    const icon = nativeImage.createFromPath('C:/Users/thecy/Pictures/test.png'); // needs to be local
+    const icon = nativeImage.createFromPath('./app.ico');
     const tray = new Tray(icon);
     const contextMenu = Menu.buildFromTemplate([
         {
@@ -68,9 +72,6 @@ app.whenReady().then(() => {
     tray.setToolTip('IllusionEngine');
     tray.setContextMenu(contextMenu);
 });
-
-const widget_dir = "/widgets/";
-const appdata = "appdata.json";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function runexternalcommand(processid: string) {
@@ -111,14 +112,11 @@ async function createPrompt(processid: string) {
     const datapath = path.join(app.getPath("userData"), appdata);
     let data = { widgets: { [processid]: value } };
     try {
-        if (existsSync(datapath)) {
-            console.log("has path");
-            const rawdata = await fs.readFile(datapath, 'utf8');
-            data = JSON.parse(rawdata);
+        const rawdata = await fs.readFile(datapath, 'utf8');
+        data = JSON.parse(rawdata);
 
-            data["widgets"] ??= {}
-            data["widgets"][processid] = value;
-        }
+        data["widgets"] ??= {}
+        data["widgets"][processid] = value;
     } catch (err) {
         // pass
     }
@@ -138,6 +136,7 @@ ipcMain.on('call-process', (event, arg) => {
 app.on('ready', () => {
     //runexternalcommand("testid1");
     //writeJSON("testwidget", { foo: "bar", foo2: [ "data" ] });
+    getWidgetLoadData();
 });
 
 function run(process: string) {
@@ -154,7 +153,7 @@ ipcMain.on('write-json', (event, arg) => {
 async function writeJSON(id: string, data: unknown) {
     // write json to file, probably safe
 
-    const datapath = path.join(app.getPath("userData"), widget_dir, id);
+    const datapath = path.join(app.getPath("userData"), widgetdata_dir, id);
 
     const jsondata = JSON.stringify(data, null, 2);
     await fs.mkdir(datapath, { recursive: true });
@@ -173,10 +172,36 @@ ipcMain.on('fetch-json', (event, arg) => {
 async function fetchJSON(id: string) {
     // get json from file
     try {
-        const rawdata = await fs.readFile(path.join(app.getPath("userData"), widget_dir, id, 'savedata.json'), 'utf8');
+        const rawdata = await fs.readFile(path.join(app.getPath("userData"), widgetdata_dir, id, 'savedata.json'), 'utf8');
         const data = JSON.parse(rawdata);
         return data;
     } catch (err) {
         return {};
     }
+}
+
+const getDirectories = async source =>
+    (await fs.readdir(source, { withFileTypes: true }))
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
+
+async function getWidgetLoadData() {
+    const datalist = [];
+
+    const dirs = await getDirectories(path.join(app.getPath("userData"), widget_dir))
+    for (let i = 0; i < dirs.length; i++) {
+        try {
+            const datapath = path.join(app.getPath("userData"), widget_dir, dirs[i], 'widget.json');
+            const rawdata = await fs.readFile(datapath, 'utf8');
+
+            datalist.push({
+                key: dirs[i],
+                value: JSON.parse(rawdata)
+            });
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    return datalist;
 }
