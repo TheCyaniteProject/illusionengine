@@ -18,6 +18,8 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
   #iframe: HTMLIFrameElement;
   onMessage: (event: MessageEvent) => void;
 
+  get iframe() { return this.#iframe; }
+
   //runs when element is created with createCompent()
   constructor() {
     super();
@@ -32,6 +34,7 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
 
     this.#iframe = this.#shadow.querySelector('iframe')!;
     this.onMessage = this.#onMessage.bind(this);
+
   }
 
   #onMessage(event: MessageEvent) {
@@ -51,7 +54,7 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
     if (typeof apiMethod != 'function') throw new Error(`Unknown method: ${method}`);
 
     //@ts-expect-error dont know how to type that tbh
-    apiMethod(...args);
+    apiMethod(this, ...args);
   }
 
   connectedCallback() {

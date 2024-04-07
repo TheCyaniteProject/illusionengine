@@ -21,6 +21,8 @@ const createWindow = function () {
         }
     });
 
+    window.webContents.openDevTools()
+
     if (process.env.DEV == 'true') {
         window.loadURL('http://127.0.0.1:3000');
     }
