@@ -75,7 +75,7 @@ app.whenReady().then(() => {
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function runexternalcommand(processid: string) {
+async function runexternalcommand(widgetid: string, processid: string) {
     // check if processid has been asigned. If not, prompt the user to add a new process or select from list
     // Else, run the saved process.
 
@@ -89,37 +89,40 @@ async function runexternalcommand(processid: string) {
 
         // check for process
         if ("widgets" in data) {
-            if (processid in data["widgets"]) {
-                console.log("Has data");
-                run(data["widgets"][processid]);
-                return;
+            if (widgetid in data["widgets"]) {
+                if (processid in data["widgets"][widgetid]) {
+                    console.log("Has data");
+                    run(data["widgets"][widgetid][processid]);
+                    return;
+                }
             }
         }
         console.log("No data");
         // no > new process prompt
-        createPrompt(processid);
+        createPrompt(widgetid, processid);
 
     } catch (err) {
         // new process prompt
-        createPrompt(processid);
+        createPrompt(widgetid, processid);
     }
 }
 
-async function createPrompt(processid: string) {
+async function createPrompt(widgetid: string, processid: string) {
 
     const value = (await dialog.showOpenDialog({ properties: ['openFile'] })).filePaths[0];
 
     // creates 'appdata' file if it doesn't exist, also 'widgets' and 'processid' data vars, and then sets it's value
     const datapath = path.join(app.getPath("userData"), appdata);
-    let data = { widgets: { [processid]: value } };
+    let data = { widgets: { [widgetid]: { [processid]: value } } };
     try {
         const rawdata = await fs.readFile(datapath, 'utf8');
         data = JSON.parse(rawdata);
 
         data["widgets"] ??= {}
-        data["widgets"][processid] = value;
+        data["widgets"][widgetid] ??= {}
+        data["widgets"][widgetid][processid] = value;
     } catch (err) {
-        // pass
+        console.log(err)
     }
 
     const jsondata = JSON.stringify(data, null, 2);
@@ -130,7 +133,8 @@ async function createPrompt(processid: string) {
 
 ipcMain.on('call-process', (event, arg) => {
     console.log(arg + " process requested");
-    runexternalcommand(arg);
+    console.log(arg[0]+" - "+ arg[1])
+    runexternalcommand(arg[0], arg[1]);
 });
 
 // debug - remove after contextBridge is replaced

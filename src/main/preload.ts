@@ -1,8 +1,8 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 export const API = {
-    run(processid: string) {
-        ipcRenderer.send("call-process", processid);
+    run(widgetid:string, processid: string) {
+        ipcRenderer.send("call-process", [widgetid, processid]);
     },
     write(id: string, data: unknown) {
         ipcRenderer.send("write-json", [id, data]);

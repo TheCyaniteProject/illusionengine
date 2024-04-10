@@ -34,7 +34,6 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
 
     this.#iframe = this.#shadow.querySelector('iframe')!;
     this.onMessage = this.#onMessage.bind(this);
-
   }
 
   #onMessage(event: MessageEvent) {
