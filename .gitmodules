@@ -1,6 +1,6 @@
 [submodule "src/widgets"]
 	path = src/widgets
-	url = git@github.com:TheCyaniteProject/illusionengine-widgets.git
+	url = ../illusionengine-widgets
 [submodule "src/api"]
 	path = src/api
-	url = git@github.com:TheCyaniteProject/illusionengine-api.git
+	url = ../illusionengine-api

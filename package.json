@@ -5,9 +5,9 @@
   "main": "build/main.js",
   "scripts": {
     "watch": "node build.mjs --watch",
-    "start:dev": "cross-env DEV=true concurrently -k \"npm:serve\" \"wait-on http://127.0.0.1:3000 && npm run start:build\"",
-    "start:build": "electron ./build/main.js",
-    "serve": "live-server build --no-browser --port=3000 --host=127.0.0.1",
+    "dev": "cross-env DEV=true concurrently -k \"npm:watch\" \"npm:start\"",
+    "prestart": "node build.mjs",
+    "start": "electron ./build/main.js",
     "typecheck": "tsc --no-emit",
     "build": "node build.mjs && electron-builder"
   },
@@ -38,13 +38,6 @@
     "electron": "^29.1.6",
     "electron-builder": "^24.13.3",
     "esbuild": "^0.20.2",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.1",
-    "live-server": "^1.2.2",
-    "typescript": "^5.4.3",
-    "wait-on": "^7.2.0"
-  },
-  "dependencies": {
-    "normalize.css": "^8.0.1"
+    "typescript": "^5.4.3"
   }
 }
