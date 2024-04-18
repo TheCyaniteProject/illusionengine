@@ -1,15 +1,16 @@
 import { contextBridge, ipcRenderer } from "electron";
 
+export const API_NAME = 'illusion_engine' as const;
 export const API = {
-    run(widgetid:string, processid: string) {
-        ipcRenderer.send("call-process", [widgetid, processid]);
+    run(widget: string, processid: string) {
+        return ipcRenderer.invoke("call-process", widget, processid);
     },
-    write(id: string, data: unknown) {
-        ipcRenderer.send("write-json", [id, data]);
+    write(widget: string, data: unknown) {
+        return ipcRenderer.invoke("write-json", widget, data);
     },
-    async read(id: string) {
-        return await ipcRenderer.invoke('fetch-reply', id);
+    read(widget: string, id: string) {
+        return ipcRenderer.invoke('fetch-reply', widget, id);
     },
 } as const;
 
-contextBridge.exposeInMainWorld("illusion_engine", API);
+contextBridge.exposeInMainWorld(API_NAME, API);

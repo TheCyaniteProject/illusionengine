@@ -3,63 +3,46 @@ import path from 'path';
 import fs from 'fs/promises';
 import { execFile } from 'child_process';
 
-const widget_dir = "/widgets/";
-const widgetdata_dir = "/widgetdata/";
-const appdata = "appdata.json";
+const WIDGETS_DIR = "/widgets/";
+const WIDGETS_DATA_DIR = "/widgetdata/";
+const APPDATA = "appdata.json";
 
 const createWindow = function () {
     const window = new BrowserWindow({
         fullscreen: true,
         resizable: false,
         movable: false,
-        minimizable: true,
+        minimizable: false,
         transparent: true,
-        focusable: true,
+        focusable: false,
         frame: false,
+        type: 'desktop',
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         }
     });
 
-    window.webContents.openDevTools()
+    window.webContents.openDevTools();
 
-    if (process.env.DEV == 'true') {
-        window.loadURL('http://127.0.0.1:3000');
-    }
-    else {
-        window.loadFile(path.join(__dirname, 'index.html'));
-    }
+    window.loadFile(path.join(__dirname, 'index.html'));
 
-    return window;
-};
-
-app.disableHardwareAcceleration();
-
-app.on('ready', () => {
-    createWindow();
-});
-
-app.whenReady().then(() => {
     const icon = nativeImage.createFromPath('./app.ico');
     const tray = new Tray(icon);
     const contextMenu = Menu.buildFromTemplate([
         {
             label: 'Show Widgets', click: function () {
-                const window = BrowserWindow.getAllWindows()[0];
                 window.setFocusable(true);
                 window.show();
-                // window.setFocusable(false);
+                window.setFocusable(false);
             }
         },
         {
             label: 'Reload Widgets', click: function () {
-                const window = BrowserWindow.getAllWindows()[0];
                 window.reload();
             }
         },
         {
             label: 'DevTools', click: function () {
-                const window = BrowserWindow.getAllWindows()[0];
                 window.webContents.openDevTools();
             }
         },
@@ -72,6 +55,14 @@ app.whenReady().then(() => {
 
     tray.setToolTip('IllusionEngine');
     tray.setContextMenu(contextMenu);
+
+    return window;
+};
+
+app.disableHardwareAcceleration();
+
+app.on('ready', () => {
+    createWindow();
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -118,11 +109,11 @@ async function createPrompt(widgetid: string, processid: string) {
         const rawdata = await fs.readFile(datapath, 'utf8');
         data = JSON.parse(rawdata);
 
-        data["widgets"] ??= {}
-        data["widgets"][widgetid] ??= {}
+        data["widgets"] ??= {};
+        data["widgets"][widgetid] ??= {};
         data["widgets"][widgetid][processid] = value;
     } catch (err) {
-        console.log(err)
+        console.log(err);
     }
 
     const jsondata = JSON.stringify(data, null, 2);
@@ -133,7 +124,7 @@ async function createPrompt(widgetid: string, processid: string) {
 
 ipcMain.on('call-process', (event, arg) => {
     console.log(arg + " process requested");
-    console.log(arg[0]+" - "+ arg[1])
+    console.log(arg[0] + " - " + arg[1]);
     runexternalcommand(arg[0], arg[1]);
 });
 
@@ -188,12 +179,12 @@ async function fetchJSON(id: string) {
 const getDirectories = async (source: string) =>
     (await fs.readdir(source, { withFileTypes: true }))
         .filter(dirent => dirent.isDirectory())
-        .map(dirent => dirent.name)
+        .map(dirent => dirent.name);
 
 async function getWidgetLoadData() {
     const datalist = [];
 
-    const dirs = await getDirectories(path.join(app.getPath("userData"), widget_dir))
+    const dirs = await getDirectories(path.join(app.getPath("userData"), widget_dir));
     for (let i = 0; i < dirs.length; i++) {
         try {
             const datapath = path.join(app.getPath("userData"), widget_dir, dirs[i], 'widget.json');

@@ -1,3 +1,4 @@
+const API = (await import('@/main/preload.ts')).API_NAME;
 declare interface Window {
-  illusion_engine: typeof import('@/main/preload').API;
+  [API]: typeof import('@/main/preload').API;
 }

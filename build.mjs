@@ -54,14 +54,14 @@ const createRenderContext = () => context({
   bundle: true,
   format: 'esm',
   platform: 'browser',
-  // minify: !WATCH,
+  minify: !WATCH,
   logLevel: 'info'
 });
 
 const contexts = await Promise.all([
   createMainContext(),
   createRenderContext(),
-  ...createWidgetContexts('src/widgets')
+  // ...createWidgetContexts('src/widgets')
 ]);
 
 if (WATCH) {

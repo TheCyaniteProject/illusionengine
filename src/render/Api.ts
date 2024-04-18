@@ -1,9 +1,4 @@
-import { Widget } from "@/render/components/Widget";
-
-export function startApp(widget: Widget, name: unknown) {
-  if (typeof name != 'string')
-    throw new TypeError(`Expected name to be string, got '${typeof name}'`);
-}
+import type { Widget } from "@/render/components/Widget";
 
 export function resizeWidget(widget: Widget, x: unknown, y: unknown) {
   if (typeof x != 'number')
