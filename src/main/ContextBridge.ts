@@ -1,4 +1,4 @@
-import { writeWidgetJSON, readWidgetJSON, readAppdataJSON } from "@main/lib/JSON";
+import { writeWidgetJSON, readWidgetJSON, readAppdataJSON, writeAppdataJSON } from "@main/lib/JSON";
 import { createOpenFilePrompt } from "@main/lib/util";
 import { execFile } from 'child_process';
 
@@ -33,6 +33,7 @@ export const startApp = async (widget: string, app: string) => {
 
     appdata.widgets[widget] ??= { apps: [] };
     appdata.widgets[widget]!.apps.push({ name: app, path: appPath });
+    writeAppdataJSON(appdata);
   }
 
   execFile(appPath);
