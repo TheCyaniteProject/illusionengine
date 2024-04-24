@@ -1,2 +1,2 @@
 import './style.css';
-import '@/render/components/Widget';
+import '@render/components/Widget';

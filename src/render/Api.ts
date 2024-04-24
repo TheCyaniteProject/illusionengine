@@ -1,30 +1,65 @@
-import type { Widget } from "@/render/components/Widget";
+import type { Widget } from "@render/components/Widget";
 
-export function resizeWidget(widget: Widget, x: unknown, y: unknown) {
-  if (typeof x != 'number')
-    throw new TypeError(`Expected x to be number, got '${typeof x}'`);
+const types = typeof (0 as unknown);
+type Types = typeof types;
+type TypeToType<T extends Types> =
+  T extends "number" ? number :
+  T extends "boolean" ? boolean :
+  T extends "string" ? string :
+  T extends "object" ? object :
+  T extends "function" ? (...args: unknown[]) => unknown :
+  T extends "symbol" ? symbol :
+  T extends "undefined" ? undefined :
+  T extends "bigint" ? bigint :
+  never;
 
-  if (typeof y != 'number')
-    throw new TypeError(`Expected y to be number, got '${typeof y}'`);
+
+type ValidateDescriptor = { value: unknown, expected: Types; name: string; }[];
+type Validated<T extends ValidateDescriptor> = {
+  [index in keyof T]: TypeToType<T[index]['expected']>
+};
+
+function validateArguments<T extends ValidateDescriptor>(args: T): Validated<T> {
+  for (const { value, name, expected } of args) {
+    if (typeof value != expected) {
+      throw new TypeError(`Expected ${name} to be ${expected}, got ${typeof value}`);
+    }
+  }
+
+  return args.reduce((prev, { name, value }) => (prev[name] = value, prev), {} as any);
+}
+
+export function resizeWidget(widget: Widget, ...args: unknown[]) {
+  const [x, y] = validateArguments([
+    { name: 'x', value: args[0], expected: "number" },
+    { name: 'y', value: args[1], expected: "number" },
+  ] as const);
 
   widget.iframe.width = x + 'px';
   widget.iframe.height = y + 'px';
 }
 
-export function setPositionMethod(widget: Widget, type: string) {
-    widget.iframe.style.position = type;
+export function setPositionMethod(widget: Widget, ...args: unknown[]) {
+  const [type] = validateArguments([
+    { name: "type", value: args[0], expected: 'string' }
+  ]);
+  widget.iframe.style.position = type;
 }
 
-export function setScreenPosition(widget: Widget, x: unknown, y: unknown) {
-    if (typeof x != 'number')
-        throw new TypeError(`Expected x to be number, got '${typeof x}'`);
+export function setScreenPosition(widget: Widget, ...args: unknown[]) {
+  const [x, y] = validateArguments([
+    { name: 'x', value: args[0], expected: "number" },
+    { name: 'y', value: args[1], expected: "number" },
+  ] as const);
 
-    if (typeof y != 'number')
-        throw new TypeError(`Expected y to be number, got '${typeof y}'`);
-    widget.iframe.style.top = x + 'px';
-    widget.iframe.style.left = y + 'px';
+  widget.iframe.style.top = x + 'px';
+  widget.iframe.style.left = y + 'px';
 }
 
-export function run(widget: Widget, processid: string) {
-    window.illusion_engine.run(widget.getAttribute("widget")!, processid);
+export function startApp(widget: Widget, ...args: unknown[]) {
+  const [app] = validateArguments([
+    { name: 'app', value: args[0], expected: "string" },
+  ] as const);
+
+  window.illusion_engine.startApp(widget.getAttribute("widget")!, app);
 }

@@ -1,16 +1,16 @@
 import { contextBridge, ipcRenderer } from "electron";
+import * as ContextBridgeMethods from '@main/ContextBridge';
 
 export const API_NAME = 'illusion_engine' as const;
+
 export const API = {
-    run(widget: string, processid: string) {
-        return ipcRenderer.invoke("call-process", widget, processid);
-    },
-    write(widget: string, data: unknown) {
-        return ipcRenderer.invoke("write-json", widget, data);
-    },
-    read(widget: string, id: string) {
-        return ipcRenderer.invoke('fetch-reply', widget, id);
-    },
+    ...Object
+        .keys(ContextBridgeMethods)
+        .map(key => [key, (...args: any[]) => ipcRenderer.invoke(key, ...args)])
+        .reduce(
+            (prev, [key, method]) => (prev[key as keyof typeof ContextBridgeMethods] = method, prev),
+            {} as any
+        ) as typeof ContextBridgeMethods
 } as const;
 
 contextBridge.exposeInMainWorld(API_NAME, API);

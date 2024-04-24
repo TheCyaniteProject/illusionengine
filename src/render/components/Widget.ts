@@ -1,6 +1,6 @@
 import ShadowDom from './WidgetShadowDom.html';
 import StyleSheet from './WidgetStyle.raw.css';
-import * as API from '@/render/Api';
+import * as API from '@render/Api';
 
 export type WidgetAttributes = typeof Widget.observedAttributes[number];
 export type AttributeChangeHandler = `on${Capitalize<WidgetAttributes>}Change`;
@@ -52,7 +52,6 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
 
     if (typeof apiMethod != 'function') throw new Error(`Unknown method: ${method}`);
 
-    //@ts-expect-error dont know how to type that tbh
     apiMethod(this, ...args);
   }
 
