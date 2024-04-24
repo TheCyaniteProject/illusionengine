@@ -15,7 +15,7 @@ type TypeToType<T extends Types> =
   never;
 
 
-type ValidateDescriptor = {value: unknown, expected: Types; name: string; }[];
+type ValidateDescriptor = { value: unknown, expected: Types; name: string; }[];
 type Validated<T extends ValidateDescriptor> = {
   [index in keyof T]: TypeToType<T[index]['expected']>
 };
@@ -55,7 +55,7 @@ export function resizeWidget(widget: Widget, ...args: unknown[]) {
 export function setPositionMethod(widget: Widget, ...args: unknown[]) {
   const [type] = validateArguments([
     { name: "type", value: args[0], expected: 'string' }
-  ]);
+  ] as const);
   widget.iframe.style.position = type;
 }
 

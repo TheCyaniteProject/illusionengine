@@ -8,7 +8,7 @@
     "dev": "cross-env DEV=true concurrently -k \"npm:watch\" \"npm:start\"",
     "prestart": "node build.mjs",
     "start": "electron ./build/main.js",
-    "typecheck": "tsc --no-emit",
+    "typecheck": "tsc --noEmit",
     "build": "node build.mjs && electron-builder"
   },
   "build": {
