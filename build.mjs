@@ -13,6 +13,8 @@ const createMainContext = () => context({
   outdir: "./build/",
   outbase: "./src/main",
   format: 'cjs',
+  bundle: true,
+  packages: "external",
   platform: "node",
   logLevel: 'info'
 });

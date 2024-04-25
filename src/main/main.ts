@@ -4,14 +4,14 @@ import * as ContextBridgeMethods from '@main/ContextBridge';
 
 const createWindow = function () {
     const window = new BrowserWindow({
-        fullscreen: true,
-        resizable: false,
-        movable: false,
-        minimizable: false,
-        transparent: true,
-        focusable: false,
-        frame: false,
-        type: 'desktop',
+        fullscreen: !true,
+        resizable: !false,
+        movable: !false,
+        minimizable: !false,
+        transparent: !true,
+        focusable: !false,
+        frame: !false,
+        // type: 'desktop',
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         }
@@ -65,3 +65,7 @@ for (const channel in ContextBridgeMethods) {
     //we dont want to do anything with the event yet
     ipcMain.handle(channel, (_event, ...args) => ContextBridgeMethods[channel](...args));
 }
+
+ipcMain.on("init-context-bridge", (e) => {
+    e.returnValue = Object.keys(ContextBridgeMethods);
+});

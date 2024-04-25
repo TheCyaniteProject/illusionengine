@@ -33,6 +33,8 @@ export const startApp = async (widget: string, app: string) => {
 
     appdata.widgets[widget] ??= { apps: [] };
     appdata.widgets[widget]!.apps.push({ name: app, path: appPath });
+    console.log(appdata, app);
+    
     writeAppdataJSON(appdata);
   }
 

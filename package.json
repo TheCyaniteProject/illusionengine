@@ -5,7 +5,7 @@
   "main": "build/main.js",
   "scripts": {
     "watch": "node build.mjs --watch",
-    "dev": "cross-env DEV=true concurrently -k \"npm:watch\" \"npm:start\"",
+    "dev": "concurrently -k \"npm:watch\" \"npm:start\"",
     "prestart": "node build.mjs",
     "start": "electron ./build/main.js",
     "typecheck": "tsc --noEmit",
