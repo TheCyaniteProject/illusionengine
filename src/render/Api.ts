@@ -39,7 +39,7 @@ function validateArguments<T extends ValidateDescriptor>(args: T): Validated<T> 
     }
   }
 
-  return args.reduce((prev, { name, value }) => (prev[name] = value, prev), {} as any);
+  return args.map(arg => arg.value) as Validated<T>;
 }
 
 export function resizeWidget(widget: Widget, ...args: unknown[]) {

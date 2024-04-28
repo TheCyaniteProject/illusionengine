@@ -1,6 +1,17 @@
+@import url(../../node_modules/@fortawesome/fontawesome-free/css/fontawesome.min.css);
+@import url(../../node_modules/@fortawesome/fontawesome-free/css/solid.min.css);
+
 html,
 body {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  /* background-color: rgb(66, 66, 66); */
+
+  margin: 0;
+  padding: 0;
+}
+
+illusionengine-widget {
+  position: absolute;
 }

@@ -28,6 +28,23 @@ export class Widget extends HTMLElement implements WithAttributeChangeHandler {
 
     this.#shadow.innerHTML = ShadowDom;
 
+    const controls = this.#shadow.querySelector<HTMLDivElement>('.widget-controls')!;
+
+    controls.addEventListener('mousedown', (e) => {
+      const { x: startX, y: startY } = this.getBoundingClientRect();
+      const dx = startX - e.clientX;
+      const dy = startY - e.clientY;
+
+      const drag = (e: MouseEvent) => {
+        this.style.left = (dx + e.clientX) + 'px';
+        this.style.top = (dy + e.clientY) + 'px';
+      };
+      window.addEventListener('mousemove', drag);
+      window.addEventListener('mouseup', () => {
+        window.removeEventListener('mousemove', drag);
+      }, { once: true });
+    });
+
     const css = new CSSStyleSheet();
     css.replaceSync(StyleSheet);
     this.#shadow.adoptedStyleSheets = [css];

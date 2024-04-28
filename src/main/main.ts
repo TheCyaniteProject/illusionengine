@@ -4,20 +4,21 @@ import * as ContextBridgeMethods from '@main/ContextBridge';
 
 const createWindow = function () {
     const window = new BrowserWindow({
-        fullscreen: !true,
-        resizable: !false,
-        movable: !false,
-        minimizable: !false,
-        transparent: !true,
-        focusable: !false,
-        frame: !false,
+        fullscreen: true,
+        resizable: false,
+        movable: false,
+        minimizable: false,
+        transparent: true,
+        // focusable: false,
+        frame: false,
         // type: 'desktop',
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         }
     });
 
-    window.webContents.openDevTools();
+    window.setFullScreen(true);
+    // window.webContents.openDevTools();
 
     window.loadFile(path.join(__dirname, 'index.html'));
 

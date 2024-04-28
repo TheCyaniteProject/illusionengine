@@ -1,3 +1,42 @@
 iframe {
   border: none;
 }
+
+.widget-frame {
+  display: flex;
+  flex-direction: column;
+  justify-content: right;
+
+  border: 1.5px solid transparent;
+
+
+  width: max-content;
+}
+
+.widget-frame:hover,
+.pinned {
+  border-color: white;
+}
+
+.widget-controls {
+  opacity: 0;
+  background-color: white;
+  
+  display: flex;
+  justify-content: end;
+
+  cursor: move;
+
+  padding: 0.3em;
+  gap: 0.5em;
+}
+
+
+.widget-controls>* {
+  cursor: pointer;
+}
+
+.widget-frame:hover>.widget-controls,
+.pinned>.widget-controls {
+  opacity: 1;
+}

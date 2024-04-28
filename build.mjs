@@ -7,21 +7,21 @@ const WATCH = process.argv.includes('--watch');
 
 const createMainContext = () => context({
   entryPoints: [
-    "src/main/main.ts",
-    "src/main/preload.ts",
+    'src/main/main.ts',
+    'src/main/preload.ts',
   ],
-  outdir: "./build/",
-  outbase: "./src/main",
+  outdir: './build/',
+  outbase: './src/main',
   format: 'cjs',
   bundle: true,
-  packages: "external",
-  platform: "node",
+  packages: 'external',
+  platform: 'node',
   logLevel: 'info'
 });
 
-/** @type import("esbuild").Plugin */
+/** @type import('esbuild').Plugin */
 const copyHtmlPlugin = {
-  name: "HTMLPlugin",
+  name: 'HTMLPlugin',
   setup(pluginBuild) {
     pluginBuild.onLoad({ filter: /.*\.[tj]sx?/ }, async ({ path }) => {
       const { outdir, outbase } = pluginBuild.initialOptions;
@@ -44,14 +44,19 @@ const copyHtmlPlugin = {
 
 const createRenderContext = () => context({
   entryPoints: [
-    "src/render/**/*.ts"
+    'src/render/**/*.ts'
   ],
   plugins: [copyHtmlPlugin],
-  outbase: "./src/render",
-  outdir: "./build",
+  outbase: './src/render',
+  outdir: './build',
   loader: {
     '.html': 'text',
-    '.raw.css': 'text'
+    '.raw.css': 'text',
+    '.ttf': 'file',
+    '.eot': 'file',
+    '.woff': 'file',
+    '.woff2': 'file',
+    '.svg': 'file',
   },
   bundle: true,
   format: 'esm',
@@ -63,7 +68,7 @@ const createRenderContext = () => context({
 const contexts = await Promise.all([
   createMainContext(),
   createRenderContext(),
-  // ...createWidgetContexts('src/widgets')
+  ...createWidgetContexts('src/widgets')
 ]);
 
 if (WATCH) {

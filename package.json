@@ -39,5 +39,8 @@
     "electron-builder": "^24.13.3",
     "esbuild": "^0.20.2",
     "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.5.2"
   }
 }
